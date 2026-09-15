@@ -1,6 +1,6 @@
-# 33½
+# Record Killer
 
-A tiny runner on a spinning vinyl side. Stay ahead of the needle. Jump the kick. Swerve the snare. The groove gets wilder as the band does.
+33½ RPM. A tiny runner on a spinning vinyl side. Stay ahead of the needle. Jump the kick. Swerve the snare. The groove gets wilder as the band does.
 
 ## Play
 

@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({ component: Home });
 function Home() {
   return (
     <main className="game-root">
-      <h1 className="sr-only">33½</h1>
+      <h1 className="sr-only">Record Killer</h1>
       <GameClient />
     </main>
   );
