@@ -1,6 +1,7 @@
 import { Volume2, VolumeX } from "lucide-react";
 import { getGame } from "@/game/api";
 import { HATS, type HatId } from "@/game/hats";
+import type { PlayCam } from "@/game/input";
 import { useGameUI } from "@/game/store";
 
 export function Overlay() {
@@ -77,7 +78,9 @@ function Title({ ui }: { ui: ReturnType<typeof useGameUI.getState> }) {
           </button>
         )}
         <p className="hint-keys">
-          {ui.bestA > 0 ? `Best Side A · ${Math.round(ui.bestA * 90)}s` : "A / D swerve · Space jump"}
+          {ui.bestA > 0
+            ? `Best Side A · ${Math.round(ui.bestA * 90)}s`
+            : "A / D swerve · Space jump · 1 2 3 camera"}
         </p>
       </section>
     </div>
@@ -101,10 +104,22 @@ function Hud({
             style={{ left: `${Math.max(0, ui.progress - ui.needleGap * 0.048) * 100}%` }}
           />
         </div>
-        <p className="cam-tag">{camLabel(ui.cam)}</p>
+        <div className="cam-switch" data-ui>
+          {CAMS.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              data-ui
+              className={ui.cam === c.id ? "cam-btn on" : "cam-btn"}
+              onClick={() => getGame()?.setCam(c.id)}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
         {ui.hint && (
           <p className="live-hint">
-            {coarse ? "Tap to jump · Swipe to swerve" : "Space jump · A / D swerve"}
+            {coarse ? "Tap to jump · Swipe to swerve" : "Space jump · A / D swerve · 1 2 3 cam"}
           </p>
         )}
       </div>
@@ -206,9 +221,9 @@ function End({
   );
 }
 
-function camLabel(cam: string) {
-  if (cam === "overhead") return "Above the platter";
-  if (cam === "chase") return "Down the groove";
-  if (cam === "profile") return "At his side";
-  return "";
-}
+const CAMS: { id: PlayCam; label: string }[] = [
+  { id: "profile", label: "Side" },
+  { id: "chase", label: "Behind" },
+  { id: "overhead", label: "Above" },
+];
+

@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Pick a hat, drop the needle. **A / D** swerve, **Space** jump. Clear Side A to flip the record.
+Pick a hat, drop the needle. **A / D** swerve, **Space** jump. **1 / 2 / 3** or the Side / Behind / Above pills for the camera. **C** cycles. Clear Side A to flip the record.
 
 ## What it is
 

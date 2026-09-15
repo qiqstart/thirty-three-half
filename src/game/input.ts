@@ -8,7 +8,15 @@ const GAME_KEYS = new Set([
   "ArrowRight",
   "ArrowUp",
   "ArrowDown",
+  "Digit1",
+  "Digit2",
+  "Digit3",
+  "KeyC",
 ]);
+
+export type PlayCam = "profile" | "chase" | "overhead";
+
+const CAM_ORDER: PlayCam[] = ["profile", "chase", "overhead"];
 
 export class GameInput {
   keys = new Set<string>();
@@ -22,6 +30,7 @@ export class GameInput {
   private swipeX0 = 0;
   private swipeY0 = 0;
   private swiping = false;
+  private camLatch = new Set<string>();
   private unbind: Array<() => void> = [];
 
   attach(canvas: HTMLCanvasElement) {
@@ -43,6 +52,7 @@ export class GameInput {
       this.leftHeld = false;
       this.rightHeld = false;
       this.touchSteer = 0;
+      this.camLatch.clear();
     };
 
     const ptrDown = (e: PointerEvent) => {
@@ -68,15 +78,10 @@ export class GameInput {
         this.touchSteer = Math.max(-1, Math.min(1, -Math.sign(dx)));
       }
     };
-    const ptrUp = (e: PointerEvent) => {
+    const ptrUp = () => {
       this.swiping = false;
       this.jumpHeld = false;
       this.touchSteer = 0;
-      try {
-        canvas.releasePointerCapture(e.pointerId);
-      } catch {
-        /* ignore */
-      }
     };
 
     window.addEventListener("keydown", down);
@@ -137,5 +142,27 @@ export class GameInput {
     } else {
       this.jumpHeld = false;
     }
+  }
+
+  consumeCam(current: PlayCam): PlayCam | null {
+    const pick = (code: string, mode: PlayCam | "cycle"): PlayCam | null => {
+      const down = this.keys.has(code) || this.injected.has(code);
+      if (down && !this.camLatch.has(code)) {
+        this.camLatch.add(code);
+        if (mode === "cycle") {
+          const i = CAM_ORDER.indexOf(current);
+          return CAM_ORDER[(i + 1) % CAM_ORDER.length]!;
+        }
+        return mode;
+      }
+      if (!down) this.camLatch.delete(code);
+      return null;
+    };
+    return (
+      pick("Digit1", "profile") ??
+      pick("Digit2", "chase") ??
+      pick("Digit3", "overhead") ??
+      pick("KeyC", "cycle")
+    );
   }
 }

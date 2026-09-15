@@ -1,7 +1,7 @@
 import * as THREE from "three";
-import { COLORS, GROOVE_HALF, LABEL_R, R_OUTER, WALL_H } from "./config";
+import { COLORS, GROOVE_HALF, LABEL_R, R_OUTER } from "./config";
 import type { Chart } from "./chart";
-import { floorY, radiusAt, spiralAngle, spiralXZ, waveY } from "./math";
+import { radiusAt, spiralAngle, spiralXZ, waveY } from "./math";
 
 export function makeRecordTexture(side: "A" | "B"): THREE.CanvasTexture {
   const c = document.createElement("canvas");
@@ -132,7 +132,7 @@ export class GrooveRibbon {
       side: THREE.DoubleSide,
     });
     this.mesh = new THREE.Mesh(geo, mat);
-    this.mesh.position.y = 0.025;
+    this.mesh.position.y = 0.03;
   }
 
   setKicks(kicks: number[]) {
@@ -147,23 +147,23 @@ export class GrooveRibbon {
     t: number,
     intensity: number,
   ) {
-    const y = floorY(p, t, intensity, this.kicks);
+    const y = waveY(p, t, intensity);
     const a = spiralAngle(p);
     const r = radiusAt(p);
     const ca = Math.cos(a);
     const sa = Math.sin(a);
     const half = GROOVE_HALF;
-    const lanes = [-half, -half, half, half];
-    const ys = [y + WALL_H, y, y, y + WALL_H];
-    const wall = [0.42, 0.32, 0.22];
-    const floor = [0.91, 0.82, 0.62];
+    const lanes = [-half, -half * 0.28, half * 0.28, half];
+    const ys = [y - 0.055, y + 0.018, y + 0.018, y - 0.055];
+    const edge = [0.16, 0.11, 0.08];
+    const crest = [0.95, 0.88, 0.70];
     for (let k = 0; k < RING; k++) {
       const rr = r + lanes[k]!;
       const o = (i * RING + k) * 3;
       arr[o] = ca * rr;
       arr[o + 1] = ys[k]!;
       arr[o + 2] = sa * rr;
-      const c = k === 1 || k === 2 ? floor : wall;
+      const c = k === 1 || k === 2 ? crest : edge;
       cols[o] = c[0]!;
       cols[o + 1] = c[1]!;
       cols[o + 2] = c[2]!;
@@ -231,7 +231,7 @@ export class Obstacles {
     for (let i = 0; i < this.ridges.length; i++) {
       const p = this.ridgeP[i]!;
       const [x, z] = spiralXZ(p, 0);
-      const y = floorY(p, t, intensity, kicks) + 0.07;
+      const y = waveY(p, t, intensity) + 0.11;
       const m = this.ridges[i]!;
       m.position.set(x, y, z);
       const a = spiralAngle(p);
@@ -241,7 +241,7 @@ export class Obstacles {
       const p = this.spikeP[i]!;
       const side = this.spikeSide[i]!;
       const [x, z] = spiralXZ(p, side * 0.85);
-      const y = waveY(p, t, intensity) + 0.12;
+      const y = waveY(p, t, intensity) + 0.16;
       const m = this.spikes[i]!;
       m.position.set(x, y, z);
     }

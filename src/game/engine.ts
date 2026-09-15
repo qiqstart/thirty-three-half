@@ -15,7 +15,7 @@ import { buildChart, intensityAt, sectionAt, type CamMode, type Chart } from "./
 import { JazzEngine } from "./audio";
 import { Runner } from "./character";
 import { type HatId } from "./hats";
-import { GameInput } from "./input";
+import { GameInput, type PlayCam } from "./input";
 import { clamp, expDamp, spiralTangent, spiralXZ, waveY } from "./math";
 import {
   START_INVULN,
@@ -45,7 +45,6 @@ const _up = new THREE.Vector3(0, 1, 0);
 const _desiredPos = new THREE.Vector3();
 const _desiredLook = new THREE.Vector3();
 const _look = new THREE.Vector3();
-const _face = new THREE.Vector3();
 const _shake = new THREE.Vector3();
 
 export class Game {
@@ -116,9 +115,6 @@ export class Game {
     this.scene.add(this.obstacles.group);
     this.scene.add(this.arm.root);
     this.scene.add(this.runner.root);
-    this.runner.root.traverse((o) => {
-      o.frustumCulled = false;
-    });
 
     this.ribbon.setKicks(this.chart.kicks);
     this.obstacles.rebuild(this.chart);
@@ -173,18 +169,25 @@ export class Game {
     persistFromUI();
   }
 
+  setCam(mode: PlayCam) {
+    if (this.camMode === mode) return;
+    this.camMode = mode;
+    this.camSwitchAt = this.screen === "play" ? this.songT : this.orbitT;
+    useGameUI.setState({ cam: mode });
+  }
+
   start(side: "A" | "B") {
     this.unlockAudio();
     this.side = side;
     this.rebuildSide(side);
     this.resetRun();
     this.screen = "play";
-    this.camMode = "overhead";
+    this.camMode = "profile";
     this.camSwitchAt = 0;
     this.dropLift = 0.55;
     this.audio.resetMusicGain();
     this.audio.start(this.chart);
-    useGameUI.setState({ screen: "play", side, hint: true, cam: "overhead" });
+    useGameUI.setState({ screen: "play", side, hint: true, cam: "profile" });
   }
 
   retry() {
@@ -271,6 +274,10 @@ export class Game {
 
   private fixed(dt: number) {
     this.input.tick(dt);
+    if (this.screen === "play") {
+      const next = this.input.consumeCam(this.playCam());
+      if (next) this.setCam(next);
+    }
     if (this.screen !== "play") return;
 
     this.audio.tick();
@@ -367,8 +374,6 @@ export class Game {
     if (this.screen !== "play") return;
     this.screen = "won";
     this.audio.win();
-    this.camMode = "overhead";
-    this.camSwitchAt = this.songT;
     const patch: Partial<ReturnType<typeof useGameUI.getState>> = {
       screen: "won",
       progress: 1,
@@ -392,7 +397,7 @@ export class Game {
     const intensity = this.screen === "title" ? 0.04 : intensityAt(this.songT);
     const p = this.screen === "title" ? 0 : this.playerP();
     const fy = waveY(p, this.songT || 0, intensity);
-    const y = (this.screen === "title" ? fy : this.y) + 0.05;
+    const y = (this.screen === "title" ? fy : this.y) + 0.06;
 
     this.placeRunner(p, this.lane, y);
     const bpm = this.audio.playing ? this.audio.bpmNow() : 80;
@@ -425,7 +430,6 @@ export class Game {
     this.hemi.color.copy(this.bg);
 
     this.updateCamera(dt, p);
-    this.updateCamCues();
 
     this.uiAcc += dt;
     if (this.uiAcc > 0.12) {
@@ -434,26 +438,13 @@ export class Game {
     }
   }
 
+  private playCam(): PlayCam {
+    return this.camMode === "orbit" ? "profile" : this.camMode;
+  }
+
   private placeRunner(p: number, lane: number, y: number) {
     const [x, z] = spiralXZ(p, lane);
     this.runner.root.position.set(x, y, z);
-    const [fx, fz] = spiralTangent(p);
-    _fwd.set(fx, 0, fz);
-    _face.copy(this.runner.root.position).add(_fwd);
-    this.runner.root.lookAt(_face);
-  }
-
-  private updateCamCues() {
-    if (this.screen !== "play") return;
-    let mode: CamMode = this.camMode;
-    for (const c of this.chart.cams) {
-      if (this.songT >= c.t) mode = c.cam;
-    }
-    if (mode !== this.camMode) {
-      this.camMode = mode;
-      this.camSwitchAt = this.songT;
-      useGameUI.setState({ cam: mode });
-    }
   }
 
   private updateCamera(dt: number, p: number) {
@@ -474,17 +465,17 @@ export class Game {
       _desiredLook.set(rp.x * 0.45, 0, rp.z * 0.45);
       fov = 40;
     } else if (mode === "chase") {
-      _desiredPos.copy(rp).addScaledVector(_fwd, -2.4).addScaledVector(_up, 0.85);
-      _desiredLook.copy(rp).addScaledVector(_fwd, 1.2).addScaledVector(_up, 0.28);
-      fov = 42;
+      _desiredPos.copy(rp).addScaledVector(_fwd, -1.85).addScaledVector(_up, 0.62);
+      _desiredLook.copy(rp).addScaledVector(_fwd, 1.05).addScaledVector(_up, 0.4);
+      fov = 40;
     } else {
       _desiredPos
         .copy(rp)
-        .addScaledVector(_right, -2.05)
-        .addScaledVector(_fwd, 0.05)
-        .addScaledVector(_up, 0.32);
-      _desiredLook.copy(rp).addScaledVector(_up, 0.3);
-      fov = 36;
+        .addScaledVector(_right, -1.7)
+        .addScaledVector(_fwd, 0.15)
+        .addScaledVector(_up, 0.58);
+      _desiredLook.copy(rp).addScaledVector(_up, 0.4);
+      fov = 30;
     }
 
     const switching = this.screen === "play" && this.songT - this.camSwitchAt < CAM_BLEND;
@@ -531,6 +522,7 @@ export class Game {
       setKeys: (codes: string[]) => this.input.setKeys(codes),
       getCamY: () => this.camera.position.y,
       getPlayerY: () => this.runner.root.position.y,
+      getCam: () => this.camMode,
     };
   }
 }
@@ -544,6 +536,7 @@ declare global {
       setKeys?: (codes: string[]) => void;
       getCamY?: () => number;
       getPlayerY?: () => number;
+      getCam?: () => string;
     };
   }
 }

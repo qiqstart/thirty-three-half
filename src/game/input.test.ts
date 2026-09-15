@@ -47,4 +47,34 @@ describe("GameInput", () => {
     input.steerOverride = -1;
     assert.equal(input.steer(), -1);
   });
+
+  it("1 / 2 / 3 pick a camera and C cycles", () => {
+    const input = new GameInput();
+    input.setKeys(["Digit1"]);
+    assert.equal(input.consumeCam("chase"), "profile");
+    assert.equal(input.consumeCam("profile"), null);
+
+    input.setKeys([]);
+    input.consumeCam("profile");
+    input.setKeys(["Digit2"]);
+    assert.equal(input.consumeCam("profile"), "chase");
+
+    input.setKeys([]);
+    input.consumeCam("chase");
+    input.setKeys(["Digit3"]);
+    assert.equal(input.consumeCam("chase"), "overhead");
+
+    input.setKeys([]);
+    input.consumeCam("overhead");
+    input.setKeys(["KeyC"]);
+    assert.equal(input.consumeCam("profile"), "chase");
+    input.setKeys([]);
+    input.consumeCam("chase");
+    input.setKeys(["KeyC"]);
+    assert.equal(input.consumeCam("chase"), "overhead");
+    input.setKeys([]);
+    input.consumeCam("overhead");
+    input.setKeys(["KeyC"]);
+    assert.equal(input.consumeCam("overhead"), "profile");
+  });
 });

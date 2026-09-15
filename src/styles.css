@@ -329,6 +329,40 @@ body,
   opacity: 0.55;
 }
 
+.cam-switch {
+  pointer-events: auto;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+.cam-btn {
+  min-height: 44px;
+  min-width: 76px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in oklab, var(--color-cream) 28%, transparent);
+  background: color-mix(in oklab, var(--color-ink) 40%, transparent);
+  color: var(--color-cream);
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  transition:
+    transform 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 150ms ease,
+    background 150ms ease;
+}
+.cam-btn.on {
+  opacity: 1;
+  background: color-mix(in oklab, var(--color-cream) 18%, transparent);
+  border-color: color-mix(in oklab, var(--color-cream) 55%, transparent);
+}
+.cam-btn:active {
+  transform: scale(0.96);
+}
+
 .live-hint {
   margin: 8px 0 0;
   font-size: 0.8rem;
