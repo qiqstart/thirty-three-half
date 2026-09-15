@@ -1,4 +1,4 @@
-import { LABEL_R, LANE_WIDTH, R_INNER, R_OUTER, TURNS } from "./config";
+import { LABEL_R, LANE_WIDTH, R_INNER, R_OUTER, TURNS } from "./config.ts";
 
 export function clamp(v: number, a: number, b: number) {
   return Math.max(a, Math.min(b, v));

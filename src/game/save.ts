@@ -1,5 +1,5 @@
-import type { HatId } from "./hats";
-import { HATS } from "./hats";
+import type { HatId } from "./hats.ts";
+import { HATS } from "./hats.ts";
 
 const KEY = "thirty-three-half-v1";
 const VERSION = 1;

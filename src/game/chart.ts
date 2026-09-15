@@ -1,4 +1,4 @@
-import { SONG_DURATION } from "./config";
+import { SONG_DURATION } from "./config.ts";
 
 export type Section = "intro" | "verse" | "groove" | "build" | "climax" | "runout";
 export type CamMode = "orbit" | "overhead" | "profile" | "chase";

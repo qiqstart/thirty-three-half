@@ -5,10 +5,7 @@ import {
   GRAVITY_DOWN,
   GRAVITY_UP,
   JUMP_V,
-  LAG_PER_HIT,
-  LAG_RECOVER,
   LANE_SPEED,
-  NEEDLE_LEAD,
   ROOM,
   SONG_DURATION,
   SYNC_BOOST,
@@ -20,6 +17,18 @@ import { Runner } from "./character";
 import { type HatId } from "./hats";
 import { GameInput } from "./input";
 import { clamp, expDamp, spiralTangent, spiralXZ, waveY } from "./math";
+import {
+  START_INVULN,
+  applyHit,
+  kickHits,
+  needleCaught,
+  needleGap,
+  needleProgress,
+  playerProgress,
+  recoverLag,
+  runWon,
+  snareHits,
+} from "./rules";
 import { persistFromUI, useGameUI } from "./store";
 import {
   GrooveRibbon,
@@ -218,7 +227,7 @@ export class Game {
     this.grounded = true;
     this.coyote = 0;
     this.trip = 0;
-    this.invuln = 0.4;
+    this.invuln = START_INVULN;
     this.trauma = 0;
     this.acc = 0;
     this.runner.root.rotation.set(0, 0, 0);
@@ -253,11 +262,11 @@ export class Game {
   };
 
   private playerP() {
-    return clamp(this.songT / SONG_DURATION - this.lag, 0, 1);
+    return playerProgress(this.songT, this.lag);
   }
 
   private needleP() {
-    return this.songT / SONG_DURATION - NEEDLE_LEAD;
+    return needleProgress(this.songT);
   }
 
   private fixed(dt: number) {
@@ -275,7 +284,7 @@ export class Game {
 
     if (this.trip > 0) this.trip = Math.max(0, this.trip - dt);
     if (this.invuln > 0) this.invuln = Math.max(0, this.invuln - dt);
-    if (this.lag > 0 && this.trip <= 0) this.lag = Math.max(0, this.lag - LAG_RECOVER * dt);
+    if (this.lag > 0 && this.trip <= 0) this.lag = recoverLag(this.lag, this.trip, dt);
 
     const steer = this.input.steer();
     const targetLane = steer === 0 ? 0 : clamp(-steer, -1, 1);
@@ -312,34 +321,26 @@ export class Game {
 
     this.collide(p, base);
 
-    const gap = this.playerP() - this.needleP();
-    if (gap <= 0 && t > 1.2) this.die();
-    else if (p >= 0.995 || t >= SONG_DURATION) this.win();
+    if (needleCaught(this.playerP(), this.needleP(), t)) this.die();
+    else if (runWon(p, t)) this.win();
   }
 
   private collide(p: number, base: number) {
     if (this.invuln > 0 || this.screen !== "play") return;
-    const window = 0.002;
-    for (const kp of this.chart.kicks) {
-      if (Math.abs(p - kp) <= window && this.y < base + 0.13) {
-        this.hit();
-        return;
-      }
-    }
-    for (const s of this.chart.snares) {
-      if (Math.abs(s.p - p) > 0.0024) continue;
-      if (Math.abs(this.lane - s.side * 0.85) < 0.5 && this.y < 0.18) {
-        this.hit();
-        return;
-      }
+    if (
+      kickHits(p, this.y, base, this.chart.kicks) ||
+      snareHits(p, this.y, this.lane, this.chart.snares)
+    ) {
+      this.hit();
     }
   }
 
   private hit() {
     if (this.invuln > 0) return;
-    this.lag += LAG_PER_HIT;
-    this.trip = 0.45;
-    this.invuln = 0.55;
+    const next = applyHit(this.lag);
+    this.lag = next.lag;
+    this.trip = next.trip;
+    this.invuln = next.invuln;
     this.trauma = Math.min(1, this.trauma + 0.45);
     this.audio.stumble();
   }
@@ -508,7 +509,7 @@ export class Game {
 
   private pushUI(force: boolean) {
     if (this.screen !== "play" && !force) return;
-    const gap = clamp((this.playerP() - this.needleP()) / NEEDLE_LEAD, 0, 1.4);
+    const gap = needleGap(this.playerP(), this.needleP());
     const hint = this.screen === "play" && this.songT < 6;
     useGameUI.setState({
       progress: this.playerP(),

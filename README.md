@@ -18,6 +18,16 @@ Pick a hat, drop the needle. **A / D** swerve, **Space** jump. Clear Side A to f
 - Kick jumps, snare swerves, a needle that punishes lag
 - Best times stored in the browser — no accounts
 
+## Tests
+
+```bash
+npm test
+```
+
+A pre-commit hook runs this before every commit (`npm install` wires it). Skip with `git commit --no-verify` only if you mean it.
+
 ## Stack
 
 React 19, TanStack Start, Three.js, Web Audio, Tailwind v4.
+
+
