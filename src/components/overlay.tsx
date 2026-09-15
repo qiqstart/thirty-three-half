@@ -12,8 +12,8 @@ export function Overlay() {
     <div className="overlay">
       <header className="top-bar">
         <p className="mark">
-          Record Killer
-          <span>33½ RPM</span>
+          Killer Record
+          <span>Record Killer · 33½ RPM</span>
         </p>
         <button
           type="button"
@@ -38,8 +38,8 @@ function Title({ ui }: { ui: ReturnType<typeof useGameUI.getState> }) {
   return (
     <div className="panel-wrap">
       <section className="jacket" data-ui>
-        <p className="kicker">33½ RPM · Side {ui.side} · Microgroove</p>
-        <h1>Record Killer</h1>
+        <p className="kicker">Record Killer · 33½ RPM · Side {ui.side}</p>
+        <h1>Killer Record</h1>
         <p className="deck">
           A tiny runner on a spinning side. Stay ahead of the needle. Jump the kick.
           Swerve the snare. The groove gets wilder as the band does.

@@ -3,7 +3,7 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "Record Killer";
+const APP_NAME = "Killer Record";
 
 export const Route = createRootRoute({
   head: () => ({
